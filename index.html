@@ -1,0 +1,359 @@
+<html>
+
+<head>
+</head>
+
+<body>
+	<script>
+		const ISPATHCOMPRESSION = () => { return checkboxPathCompression.checked };
+		const DISPLAYRANK = () => {return checkboxInfo.checked};
+		const DISPLAYMONEY = () => {return checkboxInfo.checked};
+
+		var prec = new Array();
+		var rank = new Array();
+		var money = new Array();
+		var nodesName = ["ERROR !!! ERROR !!", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"];
+		var a = 1;
+		var b = 2;
+		var c = 3;
+		var d = 4;
+		var e = 5;
+		var f = 6;
+		var g = 7;
+		var h = 8;
+		var i = 9;
+		var j = 10;
+		var k = 11;
+		var l = 12;
+		var m = 13;
+		var n = 14;
+		var o = 15;
+		var p = 16;
+		var q = 17;
+		var r = 18;
+		var s = 19;
+		var t = 20;
+		var u = 21;
+		var v = 22;
+		var w = 23;
+		var x = 24;
+		var y = 25;
+		var z = 26;
+
+
+
+
+		function getName(node) {
+			if (1 <= node && node <= 26)
+				return nodesName[node];
+			else {
+				return "ERROR: " + node;
+			}
+		}
+
+		function clear() {
+			prec = new Array();
+			rank = new Array();
+			money = new Array();
+		}
+
+		function add(node) {
+			prec[node] = node;
+			rank[node] = 0;
+			money[node] = 0;
+		}
+
+
+
+
+
+
+		function getRoots() {
+			var roots = new Array();
+
+			for (var nodei in prec) {
+				if (prec[nodei] == nodei) {
+					roots.push(nodei);
+				}
+			}
+
+			return roots;
+
+		}
+
+
+
+		function isLeaf(node) {
+			return getSucc(node).length == 0;
+		}
+
+
+		function getSucc(node) {
+			var succ = new Array();
+
+			for (var nodei in prec) {
+				if ((prec[nodei] == node) && (nodei != node)) {
+					succ.push(nodei);
+				}
+			}
+
+			return succ;
+		}
+
+
+
+
+		function sameIntervalLNstar(ranka, rankb) {
+			if (ranka == rankb)
+				return true;
+			else if (3 <= ranka && ranka <= 4 &&
+				3 <= rankb && rankb <= 4)
+				return true;
+			else if (5 <= ranka && ranka <= 16 &&
+				5 <= rankb && rankb <= 16)
+				return true;
+			else if (16 <= ranka && ranka <= 256 &&
+				16 <= rankb && rankb <= 256)
+				return true;
+			else
+				return false;
+		}
+
+
+		function find(node) {
+			if (prec[node] == node)
+				return node;
+			else {
+				if (sameIntervalLNstar(rank[node], rank[prec[node]]))
+					money[node]--;
+				result = find(prec[node]);
+
+				if (ISPATHCOMPRESSION())
+					prec[node] = result;
+				return result;
+			}
+		}
+
+		function union(nodex, nodey) {
+			var rx = find(nodex);
+			var ry = find(nodey);
+
+			if (rank[rx] < rank[ry]) { //ry is now the root
+				prec[rx] = ry;
+				money[ry] = 2 ^ ry;
+			}
+			else { //rx is now the root
+				prec[ry] = rx;
+				money[ry] = 2 ^ ry;
+
+				rank[rx] = rank[ry];
+
+				if (rank[rx] == rank[ry])
+					rank[rx] = rank[ry] + 1;
+			}
+
+
+
+		}
+
+
+		/*return the width of a node*/
+		function getWidth(node) {
+			if (isLeaf(node))
+				return 2 * (nodeRadius + spaceBetweenTrees);
+			else {
+				var successors = getSucc(node);
+				var sum = 0;
+				for (nodei in successors) {
+					var succ = successors[nodei];
+					sum = sum + getWidth(succ);
+				}
+				return sum;
+			}
+		}
+
+
+		var nodeRadius = 12;
+		var spaceBetweenTrees = nodeRadius;
+
+
+		function drawNode(context, node, x0, y0) {
+			context.beginPath();
+			context.arc(x0, y0, nodeRadius, 0, Math.PI * 2, false);
+			context.fillStyle = 'white';
+			context.fill();
+			context.stroke();
+			context.fillStyle = 'black';
+			context.font = "bold 16px sans-serif";
+			context.fillText(getName(node), x0 - 3, y0 + 3);
+
+			if (DISPLAYRANK()) {
+				context.fillStyle = 'green';
+				context.font = "bold 12px sans-serif";
+				context.fillText(rank[node], x0 - 20, y0);
+			}
+
+			if (DISPLAYMONEY()) {
+				context.fillStyle = '#BB5C00'; //orange
+				context.font = "bold 12px sans-serif";
+				context.fillText(money[node], x0 - 20, y0 + 20);
+			}
+
+
+		}
+
+		function draw(context, node, x0, y0) {
+			var successors = getSucc(node);
+			var width = getWidth(node);
+
+
+			var posx = x0 - width / 2;
+
+			for (var nodei in successors) {
+				var succ = successors[nodei];
+				var succWidth = getWidth(succ);
+
+				posx = posx + succWidth / 2;
+				context.beginPath();
+				context.moveTo(x0, y0);
+				context.lineTo(posx, y0 + 48);
+				context.stroke();
+				context.closePath();
+
+				draw(context, succ, posx, y0 + 48);
+				posx = posx + succWidth / 2;
+			}
+
+
+			//	alert(x0 + width/2 - posx);
+			drawNode(context, node, x0, y0);
+
+		}
+
+
+		function compute() {
+			clear();
+			add(a);
+			add(b);
+			add(c);
+			add(d);
+			add(e);
+			add(f);
+			add(g);
+			add(h);
+			add(i);
+			add(j);
+			add(k);
+			add(l);
+			add(m);
+			add(n);
+			add(o);
+			add(p);
+			add(q);
+			add(r);
+			add(s);
+			add(t);
+			add(u);
+			add(v);
+			add(w);
+			add(x);
+			add(y);
+			add(z);
+			eval(document.getElementById('code').value);
+			//union(a, b);
+			//union(a, c);
+
+			paintAll();
+
+		}
+
+
+		function paintAll() {
+			var canvas = document.getElementById('canvas');
+			canvas.width = canvas.width; // to clear
+
+			var context = canvas.getContext('2d');
+			var roots = getRoots();
+			var posx = nodeRadius * 2;
+			var y0 = nodeRadius * 2;
+			for (var rooti in roots) {
+				var succ = roots[rooti];
+				var succWidth = getWidth(succ);
+				posx = posx + succWidth / 2;
+				draw(context, succ, posx, y0 + 48);
+				posx = posx + succWidth / 2 + spaceBetweenTrees;
+			}
+
+		}
+
+		window.onload = compute;
+
+
+
+
+
+
+
+
+
+
+		function loadexample() {
+			document.getElementById('code').value = " union(a, b);\n \
+union(c, d);\n \
+union(a, c);\n \
+union(e, f);\n \
+union(a, f);\n \
+\n \
+union(g, h); \n \
+union(i, j);\n \
+union(g, i);\n \
+union(k, l);\n \
+union(g, l); \n \
+ \n \
+union(a, l); \n \
+ \n \
+union(m, n); \n \
+union(o, p); \n \
+union(m, o); \n \
+union(q, r); \n \
+union(m, r); \n \
+ \n \
+union(s, t); \n \
+union(u, v); \n \
+union(s, u); \n \
+union(w, x); \n \
+union(s, x); \n \
+ \n \
+union(m, s); \n \
+\n \
+union(l, s);";
+			compute();
+		}
+
+
+	</script>
+	<h1>Union-find</h1>
+	<br /><br />
+	<table>
+		<tr>
+			<td>
+				Here you may write things as "union(e, x);" or just "find(c);"...
+				<button onclick="loadexample();">Load example</button>
+				<textarea rows="28" cols="30" id="code" onkeyup="compute();"></textarea>
+			</td>
+			<td>
+				<input id="checkboxPathCompression" type="checkbox" onclick="compute()" /><label
+					for="checkboxPathCompression">Path compression</label>
+				<br />
+				<input id="checkboxInfo" type="checkbox" onclick="compute()" /><label for="checkboxInfo">In green: ranks, In orange: money
+					that is earned by
+					nodes (amortized analysis)</label>
+				<canvas width="1500" height="500" id="canvas" onclick="compute();">
+				</canvas>
+			</td>
+		</tr>
+	</table>
+
+</body>
+
+</html>
